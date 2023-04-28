@@ -5,6 +5,12 @@ import TrashImage from "./trash-can-outline.svg";
 import NoteImage from "./note-outline.svg";
 import PlusImage from "./plus.svg";
 
+// localStorage stuff
+
+interface ISavable<U> {
+  serialize(): U;
+}
+
 // Model
 // Todo items
 enum Priority {
@@ -31,11 +37,17 @@ interface ITodoItem {
   isComplete: boolean;
 }
 
+type ISavableTodoItem = ITodoItem & ISavable<TodoItemProps>;
+
 const createTodoItem = (function () {
   let itemIdCounter = 0;
 
-  function createTodoItem(props: TodoItemProps): ITodoItem {
+  function createTodoItem(props: TodoItemProps): ISavableTodoItem {
     // other methods can be defined in the closure here
+    function serialize() {
+      return props;
+    }
+
     return {
       itemId: itemIdCounter++,
       itemTitle: props.itemTitle,
@@ -43,6 +55,8 @@ const createTodoItem = (function () {
       dueDate: props.dueDate,
       priority: props.priority,
       isComplete: props.isComplete,
+
+      serialize: serialize,
     };
   }
 
@@ -52,38 +66,44 @@ const createTodoItem = (function () {
 // Project
 interface ProjectProps {
   projectTitle: string;
-  todoItems: ITodoItem[];
+  todoItems: TodoItemProps[];
 }
 
 interface IProject {
   projectId: number;
   projectTitle: string;
-  todoItems: ITodoItem[];
+  todoItems: ISavableTodoItem[];
 
-  createTodoItem(props: TodoItemProps): ITodoItem;
-  readTodoItem(itemId: number): undefined | ITodoItem;
+  createTodoItem(props: TodoItemProps): ISavableTodoItem;
+  readTodoItem(itemId: number): undefined | ISavableTodoItem;
   updateTodoItem(itemId: number, props: TodoItemProps): void;
   deleteTodoItem(itemId: number): void;
 }
+
+type ISavableProject = IProject & ISavable<ProjectProps>;
 
 const createProject = (function () {
   let projectIdCounter = 0;
 
   function createProject(
     props: ProjectProps,
-    renderCallback: () => void
-  ): IProject {
-    const todoItems = props.todoItems;
+    commitCallback: (projectId: number) => void
+  ): ISavableProject {
+    const todoItems = props.todoItems.map((todoItemProps) =>
+      createTodoItem(todoItemProps)
+    );
     const projectTitle = props.projectTitle;
+    const projectId = projectIdCounter++;
+    const curriedCommitCallback = () => commitCallback(projectId);
 
-    const _createTodoItem = function (props: TodoItemProps): ITodoItem {
+    const _createTodoItem = function (props: TodoItemProps): ISavableTodoItem {
       const newItem = createTodoItem(props);
       todoItems.push(newItem);
       _commit();
       return newItem;
     };
 
-    function readTodoItem(itemId: number): undefined | ITodoItem {
+    function readTodoItem(itemId: number): undefined | ISavableTodoItem {
       for (const todoItem of todoItems) {
         if (todoItem.itemId == itemId) {
           _commit();
@@ -113,11 +133,18 @@ const createProject = (function () {
     }
 
     function _commit() {
-      renderCallback();
+      curriedCommitCallback();
+    }
+
+    function serialize(): ProjectProps {
+      return {
+        projectTitle: projectTitle,
+        todoItems: todoItems.map((todoItem) => todoItem.serialize()),
+      };
     }
 
     return {
-      projectId: projectIdCounter++,
+      projectId: projectId,
       todoItems: todoItems,
       projectTitle: projectTitle,
 
@@ -125,6 +152,8 @@ const createProject = (function () {
       readTodoItem: readTodoItem,
       updateTodoItem: updateTodoItem,
       deleteTodoItem: deleteTodoItem,
+
+      serialize: serialize,
     };
   }
 
@@ -145,15 +174,67 @@ interface IModel {
   getActiveProject(): IProject | null;
 }
 
+// Date objects become strings after JSON.stringify, so type of deserialized object is different
+type deserializedTodoItemProps = Omit<TodoItemProps, "dueDate"> & {
+  dueDate: string;
+};
+type deserializedProjectProps = Omit<ProjectProps, "todoItems"> & {
+  todoItems: deserializedTodoItemProps[];
+};
+
 const model = (function (): IModel {
-  const projects: IProject[] = [];
+  const localStorageKey = "projects";
+  function _saveToLocalStorage(): void {
+    const serializedProjects = projects.map((project) => project.serialize());
+    localStorage.setItem(localStorageKey, JSON.stringify(serializedProjects));
+    console.log("mocked save");
+  }
+
+  function _initializeFromLocalStorage(): ISavableProject[] {
+    const s = localStorage.getItem(localStorageKey);
+    if (s === null) {
+      return [];
+    }
+
+    const deserializedProjectProps = JSON.parse(
+      s
+    ) as deserializedProjectProps[];
+    const properProjectProps: ProjectProps[] = deserializedProjectProps.map(
+      (deserializedProjectProps) => {
+        const properTodoItemProps: TodoItemProps[] =
+          deserializedProjectProps.todoItems.map(
+            (deserializedTodoItemProps) => {
+              const newProps: TodoItemProps = {
+                itemTitle: deserializedTodoItemProps.itemTitle,
+                description: deserializedTodoItemProps.description,
+                dueDate: new Date(deserializedTodoItemProps.dueDate),
+                priority: deserializedTodoItemProps.priority,
+                isComplete: deserializedTodoItemProps.isComplete,
+              };
+              return newProps;
+            }
+          );
+        return {
+          projectTitle: deserializedProjectProps.projectTitle,
+          todoItems: properTodoItemProps,
+        };
+      }
+    );
+
+    console.log({ ...deserializedProjectProps });
+    return properProjectProps.map((projectArgs) => {
+      return createProject(projectArgs, _commit);
+    });
+  }
+
+  const projects: ISavableProject[] = _initializeFromLocalStorage();
   let currentActiveProject: number | null = null;
   let renderCallBack = function () {
     return;
   };
 
   function _createProject(projectProps: ProjectProps): IProject {
-    const newProject = createProject(projectProps, renderCallBack);
+    const newProject = createProject(projectProps, _commit);
     projects.push(newProject);
     _commit(newProject.projectId);
     return newProject;
@@ -195,6 +276,7 @@ const model = (function (): IModel {
 
   function _commit(projectId: number | null) {
     currentActiveProject = projectId;
+    _saveToLocalStorage();
     renderCallBack();
   }
 
@@ -873,7 +955,7 @@ const mainView = (function () {
     (todoIndex: number) => {
       return (model.getActiveProject() as IProject).readTodoItem(
         todoIndex
-      ) as ITodoItem;
+      ) as ISavableTodoItem;
     },
     (itemId: number, props: TodoItemProps) => {
       return (model.getActiveProject() as IProject).updateTodoItem(
@@ -887,31 +969,31 @@ const mainView = (function () {
   );
 
   // for CSS styling pre-make some stuff
-  model.createProject({
-    projectTitle: "DemoProject",
-    todoItems: [],
-  });
-  model.getActiveProject()?.createTodoItem({
-    itemTitle: "Item1",
-    description: "Item 1 description",
-    dueDate: new Date("2023-04-26"),
-    priority: Priority.Low,
-    isComplete: false,
-  });
-  model.getActiveProject()?.createTodoItem({
-    itemTitle: "Item2",
-    description: "Item 2 description",
-    dueDate: new Date("2023-04-26"),
-    priority: Priority.Medium,
-    isComplete: true,
-  });
-  model.getActiveProject()?.createTodoItem({
-    itemTitle: "Item3",
-    description: "Item 3 description",
-    dueDate: new Date("2023-04-24"),
-    priority: Priority.High,
-    isComplete: true,
-  });
+  // model.createProject({
+  //   projectTitle: "DemoProject",
+  //   todoItems: [],
+  // });
+  // model.getActiveProject()?.createTodoItem({
+  //   itemTitle: "Item1",
+  //   description: "Item 1 description",
+  //   dueDate: new Date("2023-04-26"),
+  //   priority: Priority.Low,
+  //   isComplete: false,
+  // });
+  // model.getActiveProject()?.createTodoItem({
+  //   itemTitle: "Item2",
+  //   description: "Item 2 description",
+  //   dueDate: new Date("2023-04-26"),
+  //   priority: Priority.Medium,
+  //   isComplete: true,
+  // });
+  // model.getActiveProject()?.createTodoItem({
+  //   itemTitle: "Item3",
+  //   description: "Item 3 description",
+  //   dueDate: new Date("2023-04-24"),
+  //   priority: Priority.High,
+  //   isComplete: true,
+  // });
 
   render();
 })(model, sidebarView, mainView);
