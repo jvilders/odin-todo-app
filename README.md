@@ -1,18 +1,18 @@
-# Restaurant Page - Odin Project
+# Todo App - Odin Project
 
-Designed a small page for a fictional restaurant as part of the Odin Project's JavaScript course. The lesson's focus this time was getting experience integrating a module bundler into a project, webpack in this case. I imposed another restriction on myself: No `border-radius`! I found myself throwing it on nearly everything, so I wanted to see what I could do without it. I also chose not to use any colors outside black, white, and shades of grey, but that was more because it fit with the idea I had of the fictional restaurant. I also didn't use any custom fonts, that wasn't some self-imposes challenge to learn from, I was just lazy.
+Created a todo app for the Odin Project.
 
-## Visit it [here](https://jvilders.github.io/odin-restaurant-page/)
+## Visit it [here](https://jvilders.github.io/odin-todo-app/)
 
-## Learnings
-### Overlapping grid layout
+## Notes
+### Model-View-Controller (MVC)
 
-The homepage uses a grid but with overlapping areas. It's not an amazing example, but it was fun to play around with. It seems more difficult to make a responsive design with such a grid though as the positioning of grid elements is very much a top-down decision. At smaller screens, I imagine you need to layout everything all over again (probably change the number of grid rows/columns too).
+I decided to try and implement the app using the MVC pattern. Parts of it felt very intuitive such as allowing multiple parts of the app to show information coming from only one underlying model. For example: The sidebar shows the number of todo's for each project and this number will update when you interact with the main view to add/delete todo's. It also seemed good to have the model and the view be ultimately unaware of each other, though the passing back and forth of callbacks got a bit complex. I had (and have) trouble conceptualizing how multiple 'areas' of an app should be organized, which can be seen in the code. 
 
-### Opening hours visualization
+I ultimately opted for a singular Controller and two Views, but it sounds equally reasonable to have two separate controllers. I considered this at one point, but got stuck figuring out the coordination/delegation of render callbacks and model methods between separate controllers (Should controllers talk to each other, should views delegate to each other if one 'area' is conceptually within another?). Having a third view for the Todo item itself also sounds reasonable. I can't be sure I made the best choice at each of these branches, but I did learn a lot.
 
-I made a neat visualization for the opening hours on the contact page. Didn't take as long as I thought, but that's partly because there are some shortcuts: It can't close at the very last hour of the day because the selectors used in CSS won't render the ending hour pseudo-element. I considered just using flex and having three parts: pre-open, open, post-open; then giving each a `flex-grow` value proportional to the size it should have. E.g. if opening hours are 12-16, pre-open would have `flex-grow: 12`, open would have `flex-grow: 4` and post-open would have `flex-grow: 8`. I ended up not doing this because I wanted the segmented look and this would be difficult to accomplish with only three flex items.
+Using an pub-sub style event aggregator might have made communication between objects easier, maybe I'll play with that on a future project.
 
-### Webpack wasn't that scary
+### Interface first
 
-I was expecting it to be more painful, I'd heard webpack was a very complex bundler, but for a very simple project like this it was totally fine. Had to fix some things since I was using TypeScript, but overall no huge hurdles Good to know for future simple projects! I didn't do much with uglification/minification or setting up explicit development/production settings (for example not including sourcemaps for production), I'll leave that for when I need to care about that.
+When I started on the code I tried to postpone writing implementations for as long as possible, instead only creating interfaces. I got a bit stuck in this later when requirements necessitated going back and changing these, but overall it was a good experience. The simple mindset of 'what should it do?' goes a long way and makes sure that your interface isn't needlessly specific, which helps when changing things later on.
