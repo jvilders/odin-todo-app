@@ -20,17 +20,25 @@ export interface ISidebarView {
 
 export const sidebarView = (function (): ISidebarView {
   const sidebarProjects = _verifyNotNull(document.querySelector(".projects"));
+  const reusedClassNames = {
+    addProjectButtonClass: "add-project-button",
+    editButtonClass: "edit-project-button",
+    deleteButtonClass: "delete-project-button",
+    projectSidebarTitleClass: "project-title-sidebar",
+  };
 
   function _createProjectElement(project: IProject): HTMLElement {
     const projectContainer = _createElement("div", ["project"]);
     projectContainer.setAttribute("data-index", project.projectId.toString());
 
-    const editButton = _createElement("button", ["edit-project-button"]);
+    const editButton = _createElement("button", [
+      reusedClassNames.editButtonClass,
+    ]);
     editButton.innerHTML = EditImage;
 
     const projectTitle = _createElement("span", [
       "flex-grow",
-      "project-title-sidebar",
+      reusedClassNames.projectSidebarTitleClass,
     ]);
     projectTitle.innerText = project.projectTitle;
 
@@ -44,7 +52,9 @@ export const sidebarView = (function (): ISidebarView {
 
     projectTodoCount.append(projectNr, projectImage);
 
-    const deleteButton = _createElement("button", ["delete-project-button"]);
+    const deleteButton = _createElement("button", [
+      reusedClassNames.deleteButtonClass,
+    ]);
     deleteButton.innerHTML = RemoveImage;
 
     projectContainer.append(
@@ -57,7 +67,9 @@ export const sidebarView = (function (): ISidebarView {
   }
 
   function _createAddProjectElement(): HTMLElement {
-    const addProjectButton = _createElement("button", ["add-project-button"]);
+    const addProjectButton = _createElement("button", [
+      reusedClassNames.addProjectButtonClass,
+    ]);
     addProjectButton.innerText = "Add project";
     return addProjectButton;
   }
@@ -74,7 +86,7 @@ export const sidebarView = (function (): ISidebarView {
       if (
         clickTarget &&
         clickTarget instanceof Element &&
-        clickTarget.classList.contains("add-project-button")
+        clickTarget.classList.contains(reusedClassNames.addProjectButtonClass)
       ) {
         cb({ projectTitle: "New project", todoItems: [] });
       }
@@ -87,7 +99,9 @@ export const sidebarView = (function (): ISidebarView {
       if (
         clickTarget &&
         clickTarget instanceof Element &&
-        clickTarget.classList.contains("project-title-sidebar") &&
+        clickTarget.classList.contains(
+          reusedClassNames.projectSidebarTitleClass
+        ) &&
         !("contenteditable" in clickTarget.attributes)
       ) {
         const projectIndex = _verifyNotNull(
@@ -108,12 +122,14 @@ export const sidebarView = (function (): ISidebarView {
       if (
         clickTarget &&
         clickTarget instanceof Element &&
-        clickTarget.closest(".edit-project-button")
+        clickTarget.closest(`.${reusedClassNames.editButtonClass}`)
       ) {
         // make project title field editable
         const project = _verifyNotNull(clickTarget.closest(".project"));
         const projectTitle = _verifyNotNull(
-          project.querySelector<HTMLElement>(".project-title-sidebar")
+          project.querySelector<HTMLElement>(
+            `.${reusedClassNames.projectSidebarTitleClass}`
+          )
         );
         const projectIndex = _verifyNotNull(project.getAttribute("data-index"));
 
@@ -141,7 +157,7 @@ export const sidebarView = (function (): ISidebarView {
       if (
         clickTarget &&
         clickTarget instanceof Element &&
-        clickTarget.closest(".delete-project-button")
+        clickTarget.closest(`.${reusedClassNames.deleteButtonClass}`)
       ) {
         const projectIndex = _verifyNotNull(
           _verifyNotNull(clickTarget.closest(".project")).getAttribute(

@@ -1,8 +1,8 @@
 # Todo App - Odin Project
 
-Created a todo app for the Odin Project.
+Created a todo app for the Odin Project. Allow creating projects with Todo items in them. App contents are stored in localStorage so will persist between refreshes on the same device.
 
-## Visit it [here](https://jvilders.github.io/odin-todo-app/)
+## Try it [here](https://jvilders.github.io/odin-todo-app/)
 
 ## Notes
 ### Model-View-Controller (MVC)
@@ -16,3 +16,13 @@ Using an pub-sub style event aggregator might have made communication between ob
 ### Interface first
 
 When I started on the code I tried to postpone writing implementations for as long as possible, instead only creating interfaces. I got a bit stuck in this later when requirements necessitated going back and changing these, but overall it was a good experience. The simple mindset of 'what should it do?' goes a long way and makes sure that your interface isn't needlessly specific, which helps when changing things later on.
+
+## Improvements I won't make
+- Intelligently attaching and detaching nodes from the DOM instead of wiping and remaking everything on render.
+    - Could add parameters to the render function so that functions like reading a todo item can pass information such that the sidebar isn't rerendered for example.
+- Avoid creating a new set of methods for each 'instance' of a project or todo item. Could do this by either defining such functions in an enclosing lexical scope around the factory functions, or using more classical prototypal inheritance where the functions are added on the prototype (or ES6 class syntax which, for this simple use-case, is mostly just sugar over this option). 
+- Various styling touches
+    - Custom font
+    - some movement/animation on hover
+    - transition the color change on hover
+    - etc

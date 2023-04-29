@@ -24,7 +24,21 @@ export interface IMainView {
 }
 
 export const mainView = (function () {
+  const reusedClassNames = {
+    todoSmallClass: "todo-small",
+    addTodoButtonClass: "add-todo-button",
+    addTodoFormClass: "add-todo-form",
+    formElementWrapperClass: "form-element-wrapper",
+    formBackgroundClass: "form-background",
+    todoItemClass: "todo-item",
+  };
   const mainElement = _verifyNotNull(document.querySelector("main"));
+  // const todoSmallClass = "todo-small";
+  // const addTodoButtonClass = "add-todo-button";
+  // const addTodoFormClass = "add-todo-form";
+  // const formElementWrapperClass = "form-element-wrapper";
+  // const formBackgroundClass = "form-background";
+  // const todoItemClass = "todo-item";
 
   function _createTodoColumnElement(
     dateString: string,
@@ -35,7 +49,9 @@ export const mainView = (function () {
     dateH3.innerText = dateString;
 
     const todoElements = todoItems.map((todoItem) => {
-      const todoElement = _createElement("div", ["todo-small"]);
+      const todoElement = _createElement("div", [
+        reusedClassNames.todoSmallClass,
+      ]);
       todoElement.setAttribute("data-index", todoItem.itemId.toString());
       todoElement.setAttribute(
         "data-done",
@@ -70,7 +86,9 @@ export const mainView = (function () {
     const projectTitleElement = _createElement("h2", ["project-title"]);
     projectTitleElement.innerText = project.projectTitle;
 
-    const addTodoButton = _createElement("button", ["add-todo-button"]);
+    const addTodoButton = _createElement("button", [
+      reusedClassNames.addTodoButtonClass,
+    ]);
     addTodoButton.innerHTML = PlusImage;
     const addTodoText = _createElement("span");
     addTodoText.innerText = "New ticket";
@@ -112,12 +130,12 @@ export const mainView = (function () {
   function _createAddTodoForm(
     cb: (todoProps: TodoItemProps) => void
   ): HTMLFormElement {
-    const form = _createElement("form", ["add-todo-form"]);
+    const form = _createElement("form", [reusedClassNames.addTodoFormClass]);
 
     const formCenter = _createElement("div", ["form-body"]);
 
     const titleFormElementWrapper = _createElement("div", [
-      "form-element-wrapper",
+      reusedClassNames.formElementWrapperClass,
     ]);
 
     const titleLabel = _createElement("label");
@@ -132,7 +150,7 @@ export const mainView = (function () {
     titleFormElementWrapper.append(titleLabel, todoTitle);
 
     const descriptionFormElementWrapper = _createElement("div", [
-      "form-element-wrapper",
+      reusedClassNames.formElementWrapperClass,
     ]);
 
     const descriptionLabel = _createElement("label");
@@ -148,7 +166,7 @@ export const mainView = (function () {
     descriptionFormElementWrapper.append(descriptionLabel, descriptionInput);
 
     const dueDateFormElementWrapper = _createElement("div", [
-      "form-element-wrapper",
+      reusedClassNames.formElementWrapperClass,
     ]);
 
     const dueDateLabel = _createElement("label");
@@ -164,7 +182,7 @@ export const mainView = (function () {
     dueDateFormElementWrapper.append(dueDateLabel, dueDateInput);
 
     const priorityFormElementWrapper = _createElement("div", [
-      "form-element-wrapper",
+      reusedClassNames.formElementWrapperClass,
     ]);
 
     const priorityLabel = _createElement("label");
@@ -202,7 +220,7 @@ export const mainView = (function () {
     priorityFormElementWrapper.append(priorityLabel, priorityInput);
 
     const isCompleteFormElementWrapper = _createElement("div", [
-      "form-element-wrapper",
+      reusedClassNames.formElementWrapperClass,
     ]);
 
     const isCompleteLabel = _createElement("label");
@@ -257,11 +275,13 @@ export const mainView = (function () {
       if (
         clickTarget &&
         clickTarget instanceof Element &&
-        clickTarget.closest(".add-todo-button")
+        clickTarget.closest(`.${reusedClassNames.addTodoButtonClass}`)
       ) {
         // make form, add event listener on submit of that to invoke model's createTodo using submitted form information
         const form = _createAddTodoForm(cb);
-        const formWrapper = _createElement("div", ["form-background"]);
+        const formWrapper = _createElement("div", [
+          reusedClassNames.formBackgroundClass,
+        ]);
         formWrapper.append(form);
 
         form.addEventListener("submit", () => {
@@ -275,7 +295,7 @@ export const mainView = (function () {
           if (
             clickTarget &&
             clickTarget instanceof Element &&
-            !clickTarget.closest(".add-todo-form")
+            !clickTarget.closest(`.${reusedClassNames.addTodoFormClass}`)
           ) {
             formWrapper.remove();
           } else {
@@ -304,7 +324,9 @@ export const mainView = (function () {
   } {
     // presents data from todoItem. each field has a clickhandler to edit the value (for text fields just make contenteditable,
     // for dueDate have to swap it out for the form element datepicker)
-    const todoItemElement = _createElement("div", ["todo-item"]);
+    const todoItemElement = _createElement("div", [
+      reusedClassNames.todoItemClass,
+    ]);
 
     const todoTitle = _createElement("span", ["todo-read-title"]);
     todoTitle.addEventListener("keypress", ignoreEnterCallback);
@@ -410,10 +432,12 @@ export const mainView = (function () {
       if (
         clickTarget &&
         clickTarget instanceof Element &&
-        clickTarget.closest(".todo-small") &&
+        clickTarget.closest(`.${reusedClassNames.todoSmallClass}`) &&
         !clickTarget.closest(".todo-done")
       ) {
-        const todoItemElement = clickTarget.closest(".todo-small") as Element;
+        const todoItemElement = clickTarget.closest(
+          `.${reusedClassNames.todoSmallClass}`
+        ) as Element;
         const todoIndex = parseInt(
           _verifyNotNull(todoItemElement.getAttribute("data-index"))
         );
@@ -421,7 +445,9 @@ export const mainView = (function () {
 
         const { element, getData } = _createReadTodoView(todoItem, deleteCb);
 
-        const wrapper = _createElement("div", ["form-background"]);
+        const wrapper = _createElement("div", [
+          reusedClassNames.formBackgroundClass,
+        ]);
         wrapper.append(element);
 
         mainElement.append(wrapper);
@@ -431,7 +457,7 @@ export const mainView = (function () {
           if (
             clickTarget &&
             clickTarget instanceof Element &&
-            !clickTarget.closest(".todo-item")
+            !clickTarget.closest(`.${reusedClassNames.todoItemClass}`)
           ) {
             const props = getData();
             updateCb(todoIndex, props);
